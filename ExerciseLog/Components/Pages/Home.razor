@@ -1,0 +1,72 @@
+﻿@page "/"
+@using ExerciseLog.Database
+@using ExerciseLog.Models
+
+@inject NavigationManager Navigation
+@inject AppDbContext DatabaseContext
+
+<MudContainer Class="mt-8 px-8" MaxWidth="MaxWidth.False">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudCard Elevation="2" @onclick="GoToWorkout">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Today's Workout</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardMedia Image="images/dumbbell.png" Height="150"/>
+                <MudCardContent>
+                    @if(TodaysWorkout == null)
+                    {
+                        <MudText>No Scheduled Worout</MudText>
+                    }
+                    else
+                    {
+                        <MudText>@TodaysWorkout.Name</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="6">
+            <MudPaper Elevation="2" Class="pa-4" @onclick="GoToWorkouts">
+                <MudText Typo="Typo.h6">Workouts</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6">
+            <MudPaper Elevation="2" Class="pa-4" @onclick="GoToExercises">
+                <MudText Typo="Typo.h6">Exercises</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private Workout? TodaysWorkout;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var today = DateTime.Today.DayOfWeek.ToString();
+        var todaysSchedule = DatabaseContext.Schedule.FirstOrDefault(s => s.Day == today);
+        if (todaysSchedule != null)
+        {
+            TodaysWorkout = DatabaseContext.Workouts.FirstOrDefault(s => s.Id == todaysSchedule.WorkoutId);
+        }
+    }
+
+    private void GoToWorkout()
+    {
+        Navigation.NavigateTo("/workouts");
+    }
+
+    private void GoToWorkouts()
+    {
+        Navigation.NavigateTo("/workouts");
+    }
+
+    private void GoToExercises()
+    {
+        Navigation.NavigateTo("/exercises");
+    }
+}

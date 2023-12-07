@@ -1,0 +1,61 @@
+﻿@inherits LayoutComponentBase
+
+@inject IJSRuntime JSRuntime
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout Class="full-height">
+    <MudAppBar>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Inherit" Edge="Edge.Start" OnClick="NavigateBack" />
+        <MudText Typo="Typo.h6">@Title</MudText>
+        @if (AppBarOptions != null && AppBarOptions.Count > 0)
+        {
+            <MudSpacer />
+            @foreach (var option in AppBarOptions.Where(o => o.Hidden == false))
+            {
+                <MudIconButton Icon="@option.Icon" Color="Color.Inherit" Edge="Edge.End" OnClick="((e) => option.OnClick?.Invoke())" />
+            }
+            @if (AppBarOptions.Where(o => o.Hidden).Any())
+            {
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                    @foreach (var option in AppBarOptions.Where(o => o.Hidden))
+                    {
+                        <MudMenuItem OnClick="(() => option.OnClick?.Invoke())">@option.Label</MudMenuItem>
+                    }
+                </MudMenu>
+            }
+        }
+    </MudAppBar>
+    <MudMainContent Class="full-height">
+        <CascadingValue Value="this">
+            @Body
+        </CascadingValue>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    public string Title { get; set; } = string.Empty;
+
+    public List<AppBarOption>? AppBarOptions { get; set; }
+
+    public async void NavigateBack()
+    {
+        await JSRuntime.InvokeVoidAsync("history.back");
+    }
+
+    public class AppBarOption
+    {
+        public string? Icon { get; set; }
+        public string? Label { get; set; }
+        public bool Hidden { get; set; }
+        public Action? OnClick { get; set; }
+    }
+
+    public void SetAppBarOptions(List<AppBarOption>? options)
+    {
+        AppBarOptions = options;
+        StateHasChanged();
+    }
+}

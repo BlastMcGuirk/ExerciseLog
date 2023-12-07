@@ -1,0 +1,80 @@
+﻿@page "/exercises/{ExerciseId:int}"
+@layout Components.Layout.BackButtonLayout
+
+@using ExerciseLog.Database
+@using ExerciseLog.Models
+
+@inject NavigationManager Navigation
+@inject AppDbContext DatabaseContext
+
+<MudContainer Class="pa-4 d-flex flex-column full-height">
+    <div class="flex-1 overflow-y-scroll">
+        <MudText Typo="Typo.h4">@Exercise.Name</MudText>
+        <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">@Exercise.Notes</MudText>
+        <MudTextField @bind-Value="Exercise.Notes" Placeholder="Exercise Notes" Variant="Variant.Outlined" Lines="3" />
+
+        <!-- Image -->
+        @if (Exercise.ImageURL != null)
+        {
+            <img src="@Exercise.ImageURL" style="width:100%; max-height: 30vh;" />
+        }
+        <MudTextField @bind-Value="Exercise.ImageURL" Label="Image URL" HelperText="Enter a url to an image" HelperTextOnFocus="true" />
+
+        <!-- Video -->
+        <MudChip Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Disabled="Exercise.VideoURL == null">Video</MudChip>
+        <MudTextField @bind-Value="Exercise.VideoURL" Label="Video URL" HelperText="Enter a url to a video" HelperTextOnFocus="true" />
+
+        <!-- Exercise Info -->
+        <MudCheckBox @bind-Checked="Exercise.TwoWeights" Label="Two Weights"></MudCheckBox>
+        <MudCheckBox @bind-Checked="Exercise.TwoSides" Label="Two Sides"></MudCheckBox>
+    </div>
+    <MudStack Row="true">
+        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="(() => Parent.NavigateBack())">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick=" OnSave">Save</MudButton>
+    </MudStack>
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    public Components.Layout.BackButtonLayout Parent { get; set; }
+
+    [Parameter]
+    public int ExerciseId { get; set; } = default!;
+
+    public Exercise Exercise { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Exercise = DatabaseContext.Exercises.FirstOrDefault(w => w.Id == ExerciseId);
+        Parent.SetAppBarOptions(new()
+        {
+            new()
+            {
+                Hidden = false,
+                Icon = Icons.Material.Filled.Edit,
+                OnClick = () => {
+                    Navigation.NavigateTo($"/exercises/{ExerciseId}/edit");
+                }
+            }
+        });
+        base.OnInitialized();
+    }
+
+    private void OnSave()
+    {
+        var exerciseId = Exercise.Id;
+        if (Exercise.Id != 0)
+        {
+            DatabaseContext.Exercises.Update(Exercise);
+        }
+        else
+        {
+            var newExercise = DatabaseContext.Exercises.Add(Exercise);
+            exerciseId = newExercise.Entity.Id;
+        }
+
+        DatabaseContext.SaveChanges();
+
+        Navigation.NavigateTo($"/exercises/{exerciseId}", false, true);
+    }
+}

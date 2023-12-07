@@ -1,0 +1,57 @@
+﻿@page "/workouts/{WorkoutId:int}"
+@layout Components.Layout.BackButtonLayout
+
+@using ExerciseLog.Database
+@using ExerciseLog.Models
+
+@inject AppDbContext DatabaseContext
+
+<MudContainer Class="pa-4 d-flex flex-column full-height">
+    <MudTextField @bind-Value="Workout.Name" Placeholder="Workout Name" />
+    <MudStack Class="flex-1 overflow-y-scroll">
+
+    </MudStack>
+    <MudStack Row="true">
+        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="(() => Parent.NavigateBack())">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick=" OnSave">Save</MudButton>
+    </MudStack>
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    public Components.Layout.BackButtonLayout Parent { get; set; }
+
+    [Parameter]
+    public int WorkoutId { get; set; } = default!;
+
+    public Workout Workout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Workout = DatabaseContext.Workouts.FirstOrDefault(w => w.Id == WorkoutId);
+        if (Workout == null)
+        {
+            Workout = new();
+            Parent.Title = "New Workout";
+        }
+        else
+        {
+            Parent.Title = "Edit Workout";
+        }
+        base.OnInitialized();
+    }
+
+    private void OnSave()
+    {
+        if (Workout.Id != 0)
+        {
+            DatabaseContext.Workouts.Update(Workout);
+        }
+        else
+        {
+            DatabaseContext.Workouts.Add(Workout);
+        }
+
+        DatabaseContext.SaveChanges();
+    }
+}

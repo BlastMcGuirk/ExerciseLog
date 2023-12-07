@@ -1,0 +1,52 @@
+﻿@page "/exercises"
+
+@using ExerciseLog.Database
+@using ExerciseLog.Models
+
+@inject NavigationManager Navigation
+@inject AppDbContext DatabaseContext
+
+<MudContainer Class="pa-4 d-flex flex-column full-height">
+    <MudTextField
+        Class="flex-none"
+        @bind-Value="Search"
+        Label="Search"
+        Variant="Variant.Outlined"
+        Adornment="Adornment.End"
+        AdornmentIcon="@Icons.Material.Filled.Search" />
+    @if (exercises == null)
+    {
+        <p class="flex-1">Loading...</p>
+    }
+    else if (exercises.Count == 0)
+    {
+        <MudText Typo="Typo.body1" Class="align-self-center justify-center flex-1">No Exercises Found</MudText>
+    }
+    else
+    {
+        <MudList Clickable="true" Class="flex-1 overflow-y-scroll">
+            @foreach (var exercise in exercises)
+            {
+                <MudListItem Text="@exercise.Name" />
+            }
+        </MudList>
+    }
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnNewExerciseClicked">New Exercise</MudButton>
+</MudContainer>
+
+@code {
+    private List<Exercise> exercises;
+
+    private string Search { get; set; } = String.Empty;
+
+    protected override void OnInitialized()
+    {
+        // Load exercises from the database when the component is initialized
+        exercises = DatabaseContext.Exercises.ToList();
+    }
+
+    private void OnNewExerciseClicked()
+    {
+        Navigation.NavigateTo("/exercises/0/edit");
+    }
+}
