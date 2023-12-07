@@ -48,6 +48,12 @@ namespace ExerciseLog.Database
                 .HasOne(we => we.Exercise)
                 .WithMany()
                 .HasForeignKey(we => we.ExerciseId);
+            modelBuilder.Entity<WorkoutExercise>()
+                .Navigation(we => we.Workout)
+                    .AutoInclude();
+            modelBuilder.Entity<WorkoutExercise>()
+                .Navigation(we => we.Exercise)
+                    .AutoInclude();
 
             modelBuilder.Entity<Exercise>()
                 .ToTable("Exercises")

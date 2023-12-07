@@ -8,30 +8,42 @@
 @inject AppDbContext DatabaseContext
 
 <MudContainer Class="pa-4 d-flex flex-column full-height">
-    <div class="flex-1 overflow-y-scroll">
+    <div class="flex-1 overflow-y-scroll" style="text-align: center;">
         <MudText Typo="Typo.h4">@Exercise.Name</MudText>
         <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">@Exercise.Notes</MudText>
-        <MudTextField @bind-Value="Exercise.Notes" Placeholder="Exercise Notes" Variant="Variant.Outlined" Lines="3" />
 
         <!-- Image -->
         @if (Exercise.ImageURL != null)
         {
             <img src="@Exercise.ImageURL" style="width:100%; max-height: 30vh;" />
         }
-        <MudTextField @bind-Value="Exercise.ImageURL" Label="Image URL" HelperText="Enter a url to an image" HelperTextOnFocus="true" />
 
         <!-- Video -->
-        <MudChip Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Disabled="Exercise.VideoURL == null">Video</MudChip>
-        <MudTextField @bind-Value="Exercise.VideoURL" Label="Video URL" HelperText="Enter a url to a video" HelperTextOnFocus="true" />
+        <MudChip Class="mb-8" Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Disabled="Exercise.VideoURL == null">Video</MudChip>
 
-        <!-- Exercise Info -->
-        <MudCheckBox @bind-Checked="Exercise.TwoWeights" Label="Two Weights"></MudCheckBox>
-        <MudCheckBox @bind-Checked="Exercise.TwoSides" Label="Two Sides"></MudCheckBox>
+        <!-- Past Sets -->
+        @if (!Sets.Any())
+        {
+            <MudText>No Recorded Sets</MudText>
+        }
+        @foreach (var date in Sets?.Select(s => s.WorkoutDate.ToShortDateString()).Distinct())
+        {
+            <MudText Typo="Typo.body1">@date</MudText>
+            @foreach (var set in Sets.Where(s => s.WorkoutDate.ToShortDateString() == date).OrderBy(s => s.SetNumber))
+            {
+                var dispStr = $"{set.SetNumber}: ";
+                @if (Exercise.TwoSides)
+                {
+                    dispStr += $"L {set.LWeight}lbs x {set.LReps} reps - R {set.RWeight}lbs x {set.RReps}";
+                }
+                else
+                {
+                    dispStr += $"{set.Weight}lbs x {set.Reps}";
+                }
+                <MudText Typo="Typo.body2">@dispStr</MudText>
+            }
+        }
     </div>
-    <MudStack Row="true">
-        <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="(() => Parent.NavigateBack())">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick=" OnSave">Save</MudButton>
-    </MudStack>
 </MudContainer>
 
 @code {
@@ -43,9 +55,13 @@
 
     public Exercise Exercise { get; set; }
 
+    public List<Set>? Sets { get; set; }
+
     protected override void OnInitialized()
     {
         Exercise = DatabaseContext.Exercises.FirstOrDefault(w => w.Id == ExerciseId);
+        Sets = DatabaseContext.Sets.Where(s => s.ExerciseId == ExerciseId).ToList();
+        Parent.Title = "";
         Parent.SetAppBarOptions(new()
         {
             new()

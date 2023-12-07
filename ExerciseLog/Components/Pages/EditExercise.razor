@@ -72,19 +72,19 @@
 
     private void OnSave()
     {
-        var exerciseId = Exercise.Id;
         if (Exercise.Id != 0)
         {
             DatabaseContext.Exercises.Update(Exercise);
+            DatabaseContext.SaveChanges();
+            Parent.NavigateBack();
         }
         else
         {
             var newExercise = DatabaseContext.Exercises.Add(Exercise);
-            exerciseId = newExercise.Entity.Id;
+            Exercise = newExercise.Entity;
+            DatabaseContext.SaveChanges();
+            Navigation.NavigateTo($"/exercises/{Exercise.Id}", false, true);
         }
 
-        DatabaseContext.SaveChanges();
-
-        Navigation.NavigateTo($"/exercises/{exerciseId}", false, true);
     }
 }

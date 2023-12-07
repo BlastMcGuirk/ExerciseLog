@@ -1,15 +1,25 @@
 ﻿@page "/workouts/{WorkoutId:int}"
 @layout Components.Layout.BackButtonLayout
 
+@using ExerciseLog.Components.Dialogs
 @using ExerciseLog.Database
 @using ExerciseLog.Models
 
+@inject IDialogService DialogService
 @inject AppDbContext DatabaseContext
 
 <MudContainer Class="pa-4 d-flex flex-column full-height">
     <MudTextField @bind-Value="Workout.Name" Placeholder="Workout Name" />
     <MudStack Class="flex-1 overflow-y-scroll">
-
+        @foreach (var exercise in exercises)
+        {
+            <MudStack Row="true">
+                <MudText>@exercise.Exercise.Name</MudText>
+                <MudTextField @bind-Value="exercise.NumSets" Label="Sets" Variant="Variant.Outlined"></MudTextField>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="(() => RemoveExercise(exercise))" />
+            </MudStack>
+        }
+        <MudButton Variant="Variant.Filled" OnClick="AddExercise">Add Exercise</MudButton>
     </MudStack>
     <MudStack Row="true">
         <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="(() => Parent.NavigateBack())">Cancel</MudButton>
@@ -26,6 +36,10 @@
 
     public Workout Workout { get; set; }
 
+    public List<WorkoutExercise> exercises { get; set; } = new();
+
+    public List<Exercise> allExercises { get; set; }
+
     protected override void OnInitialized()
     {
         Workout = DatabaseContext.Workouts.FirstOrDefault(w => w.Id == WorkoutId);
@@ -37,7 +51,11 @@
         else
         {
             Parent.Title = "Edit Workout";
+            exercises = DatabaseContext.WorkoutExercises.Where(we => we.WorkoutId == WorkoutId).OrderBy(we => we.NumberInWorkout).ToList();
         }
+
+        allExercises = DatabaseContext.Exercises.ToList();
+
         base.OnInitialized();
     }
 
@@ -53,5 +71,38 @@
         }
 
         DatabaseContext.SaveChanges();
+    }
+
+    private void RemoveExercise(WorkoutExercise exercise)
+    {
+        var exerciseIndex = exercises.IndexOf(exercise);
+        foreach (var workoutExercise in exercises.Where(we => we.NumberInWorkout > exercise.NumberInWorkout))
+        {
+            workoutExercise.NumberInWorkout--;
+        }
+        exercises.Remove(exercise);
+    }
+
+    private async void AddExercise()
+    {
+        var parameters = new DialogParameters<ExercisePicker> { { x => x.exercises, allExercises } };
+
+        var dialog = await DialogService.ShowAsync<ExercisePicker>("Select an Exercise", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            Exercise selected = (Exercise)result.Data;
+            exercises.Add(new()
+                {
+                    Exercise = selected,
+                    ExerciseId = selected.Id,
+                    NumberInWorkout = exercises.Count + 1,
+                    Id = new Random().Next(),
+                    Workout = Workout,
+                    WorkoutId = Workout.Id
+                }
+            );
+        }
     }
 }

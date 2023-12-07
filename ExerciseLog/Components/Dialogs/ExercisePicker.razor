@@ -1,0 +1,55 @@
+﻿@using ExerciseLog.Models
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField Class="flex-none"
+                      @bind-Value="Search"
+                      Label="Search"
+                      Immediate="true"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" />
+        @if (filteredExercises.Count == 0)
+        {
+            <MudText Typo="Typo.body1" Class="align-self-center justify-center flex-1">No Exercises Found</MudText>
+        }
+        else
+        {
+            <MudList Clickable="true" Class="flex-1 overflow-y-scroll">
+                @foreach (var exercise in filteredExercises)
+                {
+                    <MudListItem Text="@exercise.Name" @onclick="() => SelectExercise(exercise)" />
+                }
+            </MudList>
+        }
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<Exercise> exercises { get; set; }
+
+    private List<Exercise> filteredExercises
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Search)) return exercises;
+            return exercises.Where(e => e.Name.Contains(Search)).ToList();
+        }
+    }
+
+    private string Search { get; set; }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void SelectExercise(Exercise exercise)
+    {
+        MudDialog.Close(DialogResult.Ok(exercise));
+    }
+}

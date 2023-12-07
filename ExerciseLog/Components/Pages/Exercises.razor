@@ -11,6 +11,7 @@
         Class="flex-none"
         @bind-Value="Search"
         Label="Search"
+        Immediate="true"
         Variant="Variant.Outlined"
         Adornment="Adornment.End"
         AdornmentIcon="@Icons.Material.Filled.Search" />
@@ -18,16 +19,16 @@
     {
         <p class="flex-1">Loading...</p>
     }
-    else if (exercises.Count == 0)
+    else if (filteredExercises.Count == 0)
     {
         <MudText Typo="Typo.body1" Class="align-self-center justify-center flex-1">No Exercises Found</MudText>
     }
     else
     {
         <MudList Clickable="true" Class="flex-1 overflow-y-scroll">
-            @foreach (var exercise in exercises)
+            @foreach (var exercise in filteredExercises)
             {
-                <MudListItem Text="@exercise.Name" />
+                <MudListItem Text="@exercise.Name" @onclick="() => GoToExercise(exercise)" />
             }
         </MudList>
     }
@@ -36,6 +37,15 @@
 
 @code {
     private List<Exercise> exercises;
+
+    private List<Exercise> filteredExercises
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Search)) return exercises;
+            return exercises.Where(e => e.Name.Contains(Search)).ToList();
+        }
+    }
 
     private string Search { get; set; } = String.Empty;
 
@@ -48,5 +58,10 @@
     private void OnNewExerciseClicked()
     {
         Navigation.NavigateTo("/exercises/0/edit");
+    }
+
+    private void GoToExercise(Exercise exercise)
+    {
+        Navigation.NavigateTo($"/exercises/{exercise.Id}");
     }
 }

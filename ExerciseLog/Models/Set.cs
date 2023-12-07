@@ -10,6 +10,8 @@ namespace ExerciseLog.Models
 
         public int WorkoutId { get; set; } = default!;
 
+        public DateTime WorkoutDate { get; set; } = default!;
+
         public int SetNumber { get; set; }
 
         public int? Weight { get; set; }

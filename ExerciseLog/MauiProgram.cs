@@ -35,7 +35,7 @@ namespace ExerciseLog
                 var services = scope.ServiceProvider;
 
                 var context = services.GetRequiredService<AppDbContext>();
-                context.Database.EnsureDeleted();
+                //context.Database.EnsureDeleted();
                 context.Database.EnsureCreated();
 
                 if (!context.Schedule.Any())
