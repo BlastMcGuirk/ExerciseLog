@@ -6,6 +6,7 @@
 @using ExerciseLog.Models
 
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
 @inject AppDbContext DatabaseContext
 
 <MudContainer Class="pa-4 d-flex flex-column full-height">
@@ -13,17 +14,19 @@
     <MudStack Class="flex-1 overflow-y-scroll">
         @foreach (var exercise in exercises)
         {
-            <MudStack Row="true">
-                <MudText>@exercise.Exercise.Name</MudText>
-                <MudTextField @bind-Value="exercise.NumSets" Label="Sets" Variant="Variant.Outlined"></MudTextField>
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="(() => RemoveExercise(exercise))" />
+            <MudStack Row="true" Class="align-center">
+                <MudText style="flex: 8;">@exercise.Exercise.Name</MudText>
+                <div style="flex: 3;">
+                    <MudTextField @bind-Value="exercise.NumSets" Label="Sets" Variant="Variant.Outlined"></MudTextField>
+                </div>
+                <MudIconButton style="flex: 1;" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="(() => RemoveExercise(exercise))" />
             </MudStack>
         }
         <MudButton Variant="Variant.Filled" OnClick="AddExercise">Add Exercise</MudButton>
     </MudStack>
     <MudStack Row="true">
         <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="(() => Parent.NavigateBack())">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick=" OnSave">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="OnSave">Save</MudButton>
     </MudStack>
 </MudContainer>
 
@@ -64,13 +67,15 @@
         if (Workout.Id != 0)
         {
             DatabaseContext.Workouts.Update(Workout);
+            DatabaseContext.SaveChanges();
+            Parent.NavigateBack();
         }
         else
         {
             DatabaseContext.Workouts.Add(Workout);
+            DatabaseContext.SaveChanges();
+            Navigation.NavigateTo($"/workouts/{Workout.Id}", false, true);
         }
-
-        DatabaseContext.SaveChanges();
     }
 
     private void RemoveExercise(WorkoutExercise exercise)
@@ -103,6 +108,7 @@
                     WorkoutId = Workout.Id
                 }
             );
+            StateHasChanged();
         }
     }
 }

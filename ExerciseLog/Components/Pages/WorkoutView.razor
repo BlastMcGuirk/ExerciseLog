@@ -1,0 +1,94 @@
+﻿@page "/workouts/{WorkoutId:int}"
+@layout Components.Layout.BackButtonLayout
+
+@using ExerciseLog.Database
+@using ExerciseLog.Models
+
+@inject NavigationManager Navigation
+@inject AppDbContext DatabaseContext
+
+<MudContainer Class="pa-4 d-flex flex-column full-height">
+    <div class="flex-1 overflow-y-scroll" style="text-align: center;">
+        <MudText Typo="Typo.h4">@Exercise.Name</MudText>
+            <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">@Exercise.Notes</MudText>
+
+            <!-- Image -->
+            @if (Exercise.ImageURL != null)
+        {
+            <img src="@Exercise.ImageURL" style="width:100%; max-height: 30vh;" />
+        }
+
+        <!-- Video -->
+        <MudChip Class="mb-8" Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Disabled="Exercise.VideoURL == null">Video</MudChip>
+
+        <!-- Past Sets -->
+        @if (!Sets.Any())
+        {
+            <MudText>No Recorded Sets</MudText>
+        }
+        @foreach (var date in Sets?.Select(s => s.WorkoutDate.ToShortDateString()).Distinct())
+        {
+            <MudText Typo="Typo.body1">@date</MudText>
+            @foreach (var set in Sets.Where(s => s.WorkoutDate.ToShortDateString() == date).OrderBy(s => s.SetNumber))
+            {
+                var dispStr = $"{set.SetNumber}: ";
+                @if (Exercise.TwoSides)
+                {
+                    dispStr += $"L {set.LWeight}lbs x {set.LReps} reps - R {set.RWeight}lbs x {set.RReps}";
+                }
+                else
+                {
+                    dispStr += $"{set.Weight}lbs x {set.Reps}";
+                }
+                <MudText Typo="Typo.body2">@dispStr</MudText>
+            }
+        }
+    </div>
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    public Components.Layout.BackButtonLayout Parent { get; set; }
+
+    [Parameter]
+    public int WorkoutId { get; set; } = default!;
+
+    public Workout Workout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Exercise = DatabaseContext.Exercises.FirstOrDefault(w => w.Id == ExerciseId);
+        Sets = DatabaseContext.Sets.Where(s => s.ExerciseId == ExerciseId).ToList();
+        Parent.Title = "";
+        Parent.SetAppBarOptions(new()
+        {
+            new()
+            {
+                Hidden = false,
+                Icon = Icons.Material.Filled.Edit,
+                OnClick = () => {
+                    Navigation.NavigateTo($"/exercises/{ExerciseId}/edit");
+                }
+            }
+        });
+        base.OnInitialized();
+    }
+
+    private void OnSave()
+    {
+        var exerciseId = Exercise.Id;
+        if (Exercise.Id != 0)
+        {
+            DatabaseContext.Exercises.Update(Exercise);
+        }
+        else
+        {
+            var newExercise = DatabaseContext.Exercises.Add(Exercise);
+            exerciseId = newExercise.Entity.Id;
+        }
+
+        DatabaseContext.SaveChanges();
+
+        Navigation.NavigateTo($"/exercises/{exerciseId}", false, true);
+    }
+}
